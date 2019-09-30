@@ -1,0 +1,6 @@
+Lx: 100.       # length of mesh
+Ly: 100.       # height of mesh
+dx: 0.4        # cell spacing
+totaltime: 100.0 # duration of simulations
+dt: 0.01       # timestep
+factor: = 1.   # fraction of equilibrium radius
