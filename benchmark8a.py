@@ -1,6 +1,6 @@
 # script based on 
 # Benchmark problems for nucleation
-# Tamás Pusztai
+# Tamas Pusztai
 # September 25, 2019
 
 import os
