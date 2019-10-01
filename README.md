@@ -10,7 +10,8 @@ Pusztai - September 25, 2019")
 
 smt init --store datreant://.smt/records benchmark8
 smt configure --executable python --addlabel parameters \
-  --labelgenerator uuid --launch_mode distributed
+  --labelgenerator uuid --launch_mode distributed \
+  --pfi_path /Users/guyer/anaconda/envs/fipy/bin/pfi.py
 
 Results are stored in the `Data/` directory using a customized
 [sumatra](http://neuralensemble.org/sumatra/)
