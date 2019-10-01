@@ -59,11 +59,21 @@ phi = fp.CellVariable(mesh=mesh, name="$phi$", value=0., hasOld=True)
 
 Delta_f = 1. / (15 * fp.numerix.sqrt(2.))
 
-r = params['factor'] * 5
-phi.setValue(1., where=(x - Lx/2.)**2 + (y - Lx/2.)**2 <= r**2)
+ftot = (0.5 * phi.grad.mag**2
+        + phi**2 * (1 - phi)**2
+        - Delta_f * phi**3 * (10 - 15 * phi + 6 * phi**2))
+
+r = fp.numerix.sqrt((x - Lx/2.)**2 + (y - Lx/2.)**2)
+
+r0 = params['factor'] * 5
+phi.setValue((1 - fp.numerix.tanh((r - r0) / fp.numerix.sqrt(2.))) / 2)
+
+# viewer = fp.Viewer(vars=phi, datamin=0., datamax=1.)
+# viewer.plot()
 
 # following examples/phase/simple.py
 
+mPhi = -2 * (1 - 2 * phi) + 30 * phi * (1 - phi) * Delta_f
 dmPhidPhi = 4 + 30 * (1 - 2 * phi) * Delta_f
 S1 = dmPhidPhi * phi * (1 - phi) + mPhi * (1 - 2 * phi)
 S0 = mPhi * phi * (1 - phi) - S1 * phi
@@ -82,9 +92,10 @@ while elapsed.value <= totaltime:
         eq.sweep(var=phi, dt=dt)
     elapsed.value = elapsed() + dt
     with open(data['stats.txt'].make().abspath, 'a') as f:
-        f.write("{}\t{}\t{}\n".format(t, 
-                                      (phi.cellVolumeAverage * mesh.numberOfCells).value,
-                                      (ftot.cellVolumeAverage * mesh.numberOfCells).value))
+        f.write("{}\t{}\t{}\n".format(elapsed,
+                                      (phi.cellVolumeAverage).value,
+                                      (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value))
+#     viewer.plot()
 
 end = time.time()
 
