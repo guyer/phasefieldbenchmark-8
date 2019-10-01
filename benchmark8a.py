@@ -12,6 +12,7 @@ import datreant.core as dtr
 
 import fipy as fp
 from fipy.tools import parallelComm
+from fipy.meshes.factoryMeshes import _dnl
 
 yamlfile = sys.argv[1]
 
@@ -41,12 +42,14 @@ else:
 
 totaltime = params['totaltime']
 dt = params['dt']
+
 Lx = params['Lx']
 Ly = params['Ly']
 
-dx = params['dx']
+dx, nx = _dnl(dx=params['dx'], nx=None, Lx=Lx)
+dy, ny = _dnl(dx=params['dx'], nx=None, Lx=Ly)
 
-mesh = fp.PeriodicGrid2D(Lx=Lx, dx=dx, Ly=Ly, dy=dx)
+mesh = fp.PeriodicGrid2D(dx=dx, nx=nx, dy=dy, ny=ny)
 x, y = mesh.cellCenters[0], mesh.cellCenters[1]
 X, Y = mesh.faceCenters[0], mesh.faceCenters[1]
 
