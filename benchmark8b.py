@@ -92,6 +92,8 @@ if parallelComm.procID == 0:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
         f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
 
+parallelComm.Barrier()
+
 if parallelComm.procID == 0:
     fname = data["t={}.tar.gz".format(elapsed)].make().abspath
 else:
@@ -111,6 +113,7 @@ while elapsed.value <= savetime:
     if parallelComm.procID == 0:
         with open(data['stats.txt'].make().abspath, 'a') as f:
             f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
+    parallelComm.Barrier()
     if elapsed.value == savetime:
         if parallelComm.procID == 0:
             fname = data["t={}.tar.gz".format(elapsed)].make().abspath
