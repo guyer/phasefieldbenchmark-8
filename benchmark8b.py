@@ -92,6 +92,15 @@ if parallelComm.procID == 0:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
         f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
 
+if parallelComm.procID == 0:
+    fname = data["t={}.tar.gz".format(elapsed)].make().abspath
+else:
+    fname = None
+
+fname = parallelComm.bcast(fname)
+
+fp.tools.dump.write((phi,), filename=fname)
+
 while elapsed.value <= savetime:
     phi.updateOld()
     for sweep in range(5):
@@ -103,8 +112,14 @@ while elapsed.value <= savetime:
         with open(data['stats.txt'].make().abspath, 'a') as f:
             f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
     if elapsed.value == savetime:
-        fp.tools.dump.write((phi,),
-                            filename=data["t={}.tar.gz".format(t)].make().abspath)
+        if parallelComm.procID == 0:
+            fname = data["t={}.tar.gz".format(elapsed)].make().abspath
+        else:
+            fname = None
+
+        fname = parallelComm.bcast(fname)
+
+        fp.tools.dump.write((phi,), filename=fname)
         if savetime < totaltime:
             savetime = totaltime
         else:
