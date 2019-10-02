@@ -14,6 +14,8 @@ import fipy as fp
 from fipy.tools import parallelComm
 from fipy.meshes.factoryMeshes import _dnl
 
+from fipy.tools.debug import PRINT
+
 yamlfile = sys.argv[1]
 
 with open(yamlfile, 'r') as f:
@@ -87,12 +89,19 @@ eq = (fp.TransientTerm() ==
 
 phiAvg = (phi.cellVolumeAverage).value
 F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
+
+PRINT("phiAvg:", phiAvg)
+PRINT("F:", F)
 if parallelComm.procID == 0:
     with open(data['stats.txt'].make().abspath, 'a') as f:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
         f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
 
+PRINT("eeny")
+
 parallelComm.Barrier()
+
+PRINT("meeny")
 
 if parallelComm.procID == 0:
     fname = data["t={}.tar.gz".format(elapsed)].make().abspath
@@ -101,7 +110,11 @@ else:
 
 fname = parallelComm.bcast(fname)
 
+PRINT("miney")
+
 fp.tools.dump.write((phi,), filename=fname)
+
+PRINT("moe")
 
 while elapsed.value <= savetime:
     phi.updateOld()
