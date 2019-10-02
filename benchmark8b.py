@@ -85,10 +85,10 @@ S0 = mPhi * phi * (1 - phi) - S1 * phi
 eq = (fp.TransientTerm() == 
       fp.DiffusionTerm(coeff=1.) + S0 + fp.ImplicitSourceTerm(coeff=S1))
 
-with open(data['stats.txt'].make().abspath, 'a') as f:
-    phiAvg = (phi.cellVolumeAverage).value
-    F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
-    if parallelComm.procID == 0:
+phiAvg = (phi.cellVolumeAverage).value
+F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
+if parallelComm.procID == 0:
+    with open(data['stats.txt'].make().abspath, 'a') as f:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
         f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
 
