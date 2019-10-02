@@ -1,0 +1,7 @@
+Lx: 1000.      # length of mesh
+Ly: 1000.      # height of mesh
+dx: 0.8        # cell spacing
+savetime: 80.0 # time at which to save results
+totaltime: 400.0 # duration of simulations
+dt: 0.04       # timestep
+factor: 1.1    # fraction of equilibrium radius
