@@ -88,20 +88,13 @@ eq = (fp.TransientTerm() ==
       fp.DiffusionTerm(coeff=1.) + S0 + fp.ImplicitSourceTerm(coeff=S1))
 
 phiAvg = (phi.cellVolumeAverage).value
-F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
+volumes = fp.CellVariable(mesh=mesh, value=mesh.cellVolumes)
+F = (ftot.cellVolumeAverage * volumes.sum()).value
 
-PRINT("phiAvg:", phiAvg)
-PRINT("F:", F)
 if parallelComm.procID == 0:
     with open(data['stats.txt'].make().abspath, 'a') as f:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
         f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
-
-PRINT("eeny")
-
-parallelComm.Barrier()
-
-PRINT("meeny")
 
 if parallelComm.procID == 0:
     fname = data["t={}.tar.gz".format(elapsed)].make().abspath
@@ -109,12 +102,7 @@ else:
     fname = None
 
 fname = parallelComm.bcast(fname)
-
-PRINT("miney")
-
 fp.tools.dump.write((phi,), filename=fname)
-
-PRINT("moe")
 
 while elapsed.value <= savetime:
     phi.updateOld()
@@ -122,7 +110,7 @@ while elapsed.value <= savetime:
         eq.sweep(var=phi, dt=dt)
     elapsed.value = elapsed() + dt
     phiAvg = (phi.cellVolumeAverage).value
-    F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
+    F = (ftot.cellVolumeAverage * volumes.sum()).value
     if parallelComm.procID == 0:
         with open(data['stats.txt'].make().abspath, 'a') as f:
             f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
