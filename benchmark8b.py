@@ -86,7 +86,7 @@ eq = (fp.TransientTerm() ==
       fp.DiffusionTerm(coeff=1.) + S0 + fp.ImplicitSourceTerm(coeff=S1))
 
 with open(data['stats.txt'].make().abspath, 'a') as f:
-    phiAvg = phi.cellVolumeAverage).value
+    phiAvg = (phi.cellVolumeAverage).value
     F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
     if parallelComm.procID == 0:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
@@ -97,7 +97,7 @@ while elapsed.value <= savetime:
     for sweep in range(5):
         eq.sweep(var=phi, dt=dt)
     elapsed.value = elapsed() + dt
-    phiAvg = phi.cellVolumeAverage).value
+    phiAvg = (phi.cellVolumeAverage).value
     F = (ftot.cellVolumeAverage * mesh.cellVolumes.sum()).value
     if parallelComm.procID == 0:
         with open(data['stats.txt'].make().abspath, 'a') as f:
