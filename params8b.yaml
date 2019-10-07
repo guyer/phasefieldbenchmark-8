@@ -1,3 +1,4 @@
+restart:       # path to restart file
 Lx: 1000.      # length of mesh
 Ly: 1000.      # height of mesh
 dx: 0.8        # cell spacing

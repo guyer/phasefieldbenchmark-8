@@ -46,33 +46,47 @@ savetime = params['savetime']
 totaltime = params['totaltime']
 dt = params['dt']
 
-Lx = params['Lx']
-Ly = params['Ly']
+if params['restart']:
+    phi, = fp.tools.dump.read(filename=params['restart'])
+    mesh = phi.mesh
 
-dx, nx = _dnl(dx=params['dx'], nx=None, Lx=Lx)
-dy, ny = _dnl(dx=params['dx'], nx=None, Lx=Ly)
+    Lx = max(mesh.x) - min(mesh.x)
+    Ly = max(mesh.y) - min(mesh.y)
 
-mesh = fp.Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
-x, y = mesh.cellCenters[0], mesh.cellCenters[1]
-X, Y = mesh.faceCenters[0], mesh.faceCenters[1]
+    # scanf("%g") simulator
+    # https://docs.python.org/3/library/re.html#simulating-scanf
+    scanf_g = "[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
+    pattern = ".*/t=({g})\.tar\.gz".format(g=scanf_g)
+    elapsed = re.match(pattern, params['restart']).group(1)
+    elapsed = fp.Variable(name="$t$", value=float(elapsed))
+else:
+    Lx = params['Lx']
+    Ly = params['Ly']
 
-elapsed = fp.Variable(name="$t$", value=0.)
+    dx, nx = _dnl(dx=params['dx'], nx=None, Lx=Lx)
+    dy, ny = _dnl(dx=params['dx'], nx=None, Lx=Ly)
 
-phi = fp.CellVariable(mesh=mesh, name="$phi$", value=0., hasOld=True)
+    mesh = fp.Grid2D(dx=dx, nx=nx, dy=dy, ny=ny)
+    x, y = mesh.cellCenters[0], mesh.cellCenters[1]
+    X, Y = mesh.faceCenters[0], mesh.faceCenters[1]
+
+    phi = fp.CellVariable(mesh=mesh, name="$phi$", value=0., hasOld=True)
+
+    elapsed = fp.Variable(name="$t$", value=0.)
+
+    for xx, yy in fp.numerix.random.random(size=(100, 2)):
+        r = fp.numerix.sqrt((x - xx * Lx)**2 + (y - yy * Ly)**2)
+
+        r0 = params['factor'] * 2
+        phi.setValue(phi + (1 - fp.numerix.tanh((r - r0) / fp.numerix.sqrt(2.))) / 2)
+
+    phi.setValue(1., where=phi > 1.)
 
 Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
 
 ftot = (0.5 * phi.grad.mag**2
         + phi**2 * (1 - phi)**2
         - Delta_f * phi**3 * (10 - 15 * phi + 6 * phi**2))
-
-for xx, yy in fp.numerix.random.random(size=(100, 2)):
-    r = fp.numerix.sqrt((x - xx * Lx)**2 + (y - yy * Ly)**2)
-
-    r0 = params['factor'] * 2
-    phi.setValue(phi + (1 - fp.numerix.tanh((r - r0) / fp.numerix.sqrt(2.))) / 2)
-
-phi.setValue(1., where=phi > 1.)
 
 # viewer = fp.Viewer(vars=phi) #, datamin=0., datamax=1.)
 # viewer.plot()
