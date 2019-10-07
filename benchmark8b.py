@@ -127,7 +127,7 @@ saveStats(elapsed)
 savePhi(elapsed)
 
 for until in [savetime, totaltime]:
-    while elapsed.value <= until:
+    while elapsed.value < until:
         phi.updateOld()
         for sweep in range(5):
             eq.sweep(var=phi, dt=dt)
