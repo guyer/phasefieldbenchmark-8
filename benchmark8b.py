@@ -87,46 +87,39 @@ S0 = mPhi * phi * (1 - phi) - S1 * phi
 eq = (fp.TransientTerm() == 
       fp.DiffusionTerm(coeff=1.) + S0 + fp.ImplicitSourceTerm(coeff=S1))
 
-phiAvg = (phi.cellVolumeAverage).value
 volumes = fp.CellVariable(mesh=mesh, value=mesh.cellVolumes)
-F = (ftot.cellVolumeAverage * volumes.sum()).value
+F = ftot.cellVolumeAverage * volumes.sum()
+
+def saveStats(elapsed):
+    stats = "{}\t{}\t{}\n".format(elapsed.value, phi.cellVolumeAverage.value, F.value)
+    if parallelComm.procID == 0:
+        with open(data['stats.txt'].make().abspath, 'a') as f:
+            f.write(stats)
+
+def savePhi(elapsed):
+    if parallelComm.procID == 0:
+        fname = data["t={}.tar.gz".format(elapsed)].make().abspath
+    else:
+        fname = None
+    fname = parallelComm.bcast(fname)
+
+    fp.tools.dump.write((phi,), filename=fname)
 
 if parallelComm.procID == 0:
     with open(data['stats.txt'].make().abspath, 'a') as f:
         f.write("\t".join(["time", "fraction", "energy"]) + "\n")
-        f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
 
-if parallelComm.procID == 0:
-    fname = data["t={}.tar.gz".format(elapsed)].make().abspath
-else:
-    fname = None
+saveStats(elapsed)
+savePhi(elapsed)
 
-fname = parallelComm.bcast(fname)
-fp.tools.dump.write((phi,), filename=fname)
+for until in [savetime, totaltime]:
+    while elapsed.value <= until:
+        phi.updateOld()
+        for sweep in range(5):
+            eq.sweep(var=phi, dt=dt)
+        elapsed.value = elapsed() + dt
+        saveStats(elapsed)
 
-while elapsed.value <= savetime:
-    phi.updateOld()
-    for sweep in range(5):
-        eq.sweep(var=phi, dt=dt)
-    elapsed.value = elapsed() + dt
-    phiAvg = (phi.cellVolumeAverage).value
-    F = (ftot.cellVolumeAverage * volumes.sum()).value
-    if parallelComm.procID == 0:
-        with open(data['stats.txt'].make().abspath, 'a') as f:
-            f.write("{}\t{}\t{}\n".format(elapsed, phiAvg, F))
-    parallelComm.Barrier()
-    if elapsed.value == savetime:
-        if parallelComm.procID == 0:
-            fname = data["t={}.tar.gz".format(elapsed)].make().abspath
-        else:
-            fname = None
-
-        fname = parallelComm.bcast(fname)
-
-        fp.tools.dump.write((phi,), filename=fname)
-        if savetime < totaltime:
-            savetime = totaltime
-        else:
-            break
+    savePhi(elapsed)
 #     viewer.plot()
 
