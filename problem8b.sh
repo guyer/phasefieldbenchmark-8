@@ -4,7 +4,7 @@
 #SBATCH --nodes=1                     # -N, total number of machines
 #SBATCH --ntasks=64                   # -n, 64 MPI ranks per Opteron machine
 #SBATCH -J Problem-8b
-#SBATCH -D /data/$USER/CHiMaD/phase_field/phasefieldbenchmark-8
+#SBATCH -D /data/guyer/CHiMaD/phase_field/phasefieldbenchmark-8
 
 . /data/guyer/miniconda2/etc/profile.d/conda.sh
 
