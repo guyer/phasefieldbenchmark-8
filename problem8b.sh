@@ -6,6 +6,8 @@
 #SBATCH -J Problem-8b
 #SBATCH -D /data/$USER/CHiMaD/phase_field/phasefieldbenchmark-8
 
+. /data/guyer/miniconda2/etc/profile.d/conda.sh
+
 conda activate fipy
 
 export OMP_NUM_THREADS=1
