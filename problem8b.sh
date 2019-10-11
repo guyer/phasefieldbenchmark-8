@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition rack4,rack5,rack6 # -p, partition
+#SBATCH --partition rack3             # -p, partition
 #SBATCH --time 12:00:00               # -t, time (hh:mm:ss or dd-hh:mm:ss)
 #SBATCH --nodes=1                     # -N, total number of machines
 #SBATCH --ntasks=64                   # -n, 64 MPI ranks per Opteron machine
