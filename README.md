@@ -38,8 +38,8 @@ Sumatra version     : 0.8dev
 ```
 
 
-ATTENTION: In `distributed` launch_mode, Sumatra *must* be invoked with::
-
-  mpiexec -n 1 smt run -n 2 --main benchmark8a.py params.yaml
-
+ATTENTION: In `distributed` launch_mode, Sumatra *must* be invoked with
+```
+mpiexec -n 1 smt run -n <n> --main benchmark8a.py params.yaml
+```
 to keep MPICH happy.
