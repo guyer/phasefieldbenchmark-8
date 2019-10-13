@@ -8,10 +8,12 @@ Pusztai - September 25, 2019")
 
 ## Sumatra
 
+```
 smt init --store datreant://.smt/records benchmark8
 smt configure --executable python --addlabel parameters \
   --labelgenerator uuid --launch_mode distributed \
   --pfi_path /Users/guyer/anaconda/envs/fipy/bin/pfi.py
+```
 
 Results are stored in the `Data/` directory using a customized
 [sumatra](http://neuralensemble.org/sumatra/)
@@ -36,8 +38,8 @@ Sumatra version     : 0.8dev
 ```
 
 
-ATTENTION: In `distributed` launch_mode, Sumatra *must* be invoked with::
-
-  mpiexec -n 1 smt run -n 2 --main benchmark8a.py params.yaml
-
+ATTENTION: In `distributed` launch_mode, Sumatra *must* be invoked with
+```
+mpiexec -n 1 smt run -n <n> --main benchmark8a.py params.yaml
+```
 to keep MPICH happy.
