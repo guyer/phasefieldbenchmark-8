@@ -1,13 +1,14 @@
 
 # coding: utf-8
 
-# # Phase Field Benchmark 8b
-# ## Explicit nucleation, multiple seeds at $t=0$
-# FiPy implementation of problem 2.2: "Explicit nucleation, multiple seeds at t=0" in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
+# # Phase Field Benchmark 8c
+# ## Explicit nucleation, multiple seeds at random times
+# FiPy implementation of problem 2.3: "Explicit nucleation, multiple seeds at random times"
+# in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
 
-# **Do not edit `benchmark8b.py`**. Generate the batch-runnable file from the notebook with
+# **Do not edit `benchmark8c.py`**. Generate the batch-runnable file from the notebook with
 # ```bash
-# jupyter nbconvert benchmark8b.ipynb --to python
+# jupyter nbconvert benchmark8c.ipynb --to python
 # ```
 
 # ## Import Python modules
@@ -48,7 +49,7 @@ except:
 
 
 if isnotebook:
-    yamlfile = "params8b.yaml"
+    yamlfile = "params8c.yaml"
 else:
     yamlfile = sys.argv[1]
 
@@ -67,6 +68,7 @@ if isnotebook:
     params['checkpoint'] = 1.5 * params['dt']
     params['savetime'] = 4 * params['dt'] 
     params['totaltime'] = 100 * params['dt']
+#     params['restart'] = "t=1.830842598338903.tar.gz"
 
 
 # ### Initialize mesh and solution variables
@@ -75,7 +77,7 @@ if isnotebook:
 # 
 # or
 # 
-# Create a mesh based on parameters. 
+# Create a mesh based on parameters.
 
 # In[5]:
 
@@ -156,7 +158,7 @@ Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
 # + \left.{\frac{\partial S}{\partial \phi}}\right|_\text{old} (\phi - \phi_\text{old}) 
 # \notag \\
 # &= \nabla^2\phi + \left(S - \frac{\partial S}{\partial \phi} \phi\right)_\text{old} 
-# - \left.{\frac{\partial S}{\partial \phi}}\right|_\text{old} \phi \notag
+# + \left.{\frac{\partial S}{\partial \phi}}\right|_\text{old} \phi \notag
 # \\
 # &= \nabla^2\phi + S_0 + S_1 \phi \notag
 # \\
@@ -200,7 +202,7 @@ F = ftot.cellVolumeAverage * volumes.sum()
 
 # ## Define nucleation
 # 
-# > When adding a new seed, simply add the $\phi$ values given by the $\phi(r)$ profile
+# > generate ... supercritical seeds with $r_0 = 1.1r^∗$. ... When adding a new seed, simply add the $\phi$ values given by the $\phi(r)$ profile
 # \begin{align}
 # \phi(x) &= \frac{1 - \tanh\left(\frac{x - x_0}{\sqrt{2}}\right)}{2}\tag{8}
 # \end{align}
@@ -215,16 +217,24 @@ def nucleus(x0, y0, r0):
     return (1 - fp.numerix.tanh((r - r0) / fp.numerix.sqrt(2.))) / 2
 
 
-# > Generate random positions with uniform distribution for 100 supercritical seeds with $r_0 = 1.1r^∗$. 
+# ### Determine nucleation times
+# Either load nucleation times from `path/to/restart/nucleation_times.txt`, based on directory of `params['restart']`
+# 
+# or
+# 
+# > generate 100 random nucleation times in the range $t=0\dots100$ for adding the 100 seeds to the simulation domain.
 
 # In[11]:
 
 
-if not params['restart']:
-    for fx, fy in fp.numerix.random.random(size=(100, 2)):
-        phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
-
-    phi.setValue(1., where=phi > 1.)
+if params['restart']:
+    fname = os.path.join(os.path.dirname(params['restart']), 
+                         "nucleation_times.txt")
+    nucleation_times = fp.numerix.loadtxt(fname)
+else:
+    nucleation_times = fp.numerix.random.random(params['numnuclei']) * totaltime
+    nucleation_times.sort()
+nucleation_times = nucleation_times[nucleation_times > elapsed]
 
 
 # ## Setup output
@@ -299,13 +309,23 @@ if parallelComm.procID == 0:
 saveStats(elapsed)
 savePhi(elapsed)
 
+if not params['restart']:
+    fp.numerix.savetxt(data['nucleation_times.txt'].make().abspath, nucleation_times)
+
 
 # ## Solve and output
 
 # In[16]:
 
 
-for until in checkpoints:
+times = fp.tools.concatenate([checkpoints, nucleation_times])
+times.sort()
+
+
+# In[17]:
+
+
+for until in times:
     while elapsed.value < until:
         phi.updateOld()
         dt_until = (until - elapsed).value
@@ -318,7 +338,13 @@ for until in checkpoints:
         saveStats(elapsed)
         dt = dt_save
 
-    savePhi(elapsed)
+    if elapsed in nucleation_times:
+        fx, fy = fp.numerix.random.random(size=(2,))
+        phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
+        phi.setValue(1., where=phi > 1.)
+
+    if elapsed in checkpoints:
+        savePhi(elapsed)
 
     if isnotebook:
         viewer.plot()
