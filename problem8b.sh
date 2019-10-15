@@ -6,9 +6,9 @@
 #SBATCH -J Problem-8b
 #SBATCH -D /data/guyer/CHiMaD/phase_field/phasefieldbenchmark-8
 
-. /data/guyer/miniconda2/etc/profile.d/conda.sh
+. /tmp/guyer/miniconda2/etc/profile.d/conda.sh
 
-conda activate fipy
+conda activate cluster_fipy
 
 export OMP_NUM_THREADS=1
-mpiexec -n 1 smt run -n $SLURM_NTASKS --main benchmark8b.py params8b.yaml "$@"
+/tmp/guyer/miniconda2/envs/cluster_fipy/bin/mpiexec -n 1 smt run -n $SLURM_NTASKS --main benchmark8b.py params8b.yaml "$@"
