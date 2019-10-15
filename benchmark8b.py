@@ -3,7 +3,7 @@
 
 # # Phase Field Benchmark 8b
 # ## Explicit nucleation, multiple seeds at $t=0$
-# FiPy implementation of problem 2.2: "Explicit nucleation, multiple seeds at t=0" in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
+# FiPy implementation of problem 2.2 in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
 
 # **Do not edit `benchmark8b.py`**. Generate the batch-runnable file from the notebook with
 # ```bash
@@ -53,7 +53,12 @@ else:
     yamlfile = sys.argv[1]
 
 with open(yamlfile, 'r') as f:
-    params = yaml.load(f)
+    if hasattr(yaml, "FullLoader"):
+        # PyYAML 5.1 deprecated the plain yaml.load(input) function
+        # https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+        params = yaml.load(f, Loader=yaml.FullLoader)
+    else:
+        params = yaml.load(f)
 
 
 # ### Set any parameters for interactive notebook
@@ -64,7 +69,7 @@ with open(yamlfile, 'r') as f:
 if isnotebook:
     params['Lx'] = 100.
     params['Ly'] = 100.
-    params['checkpoint'] = 1.5 * params['dt']
+    params['checkpoint_interval'] = 1.5 * params['dt']
     params['savetime'] = 4 * params['dt'] 
     params['totaltime'] = 100 * params['dt']
 
@@ -75,12 +80,13 @@ if isnotebook:
 # 
 # or
 # 
-# Create a mesh based on parameters. 
+# Create a mesh based on parameters. Set
+# >  the domain size to 1000 × 1000... the spatial and temporal resolution by setting $\Delta x = \Delta y = 0.8$ and $\Delta t = 0.04$
 
 # In[5]:
 
 
-checkpoint = params['checkpoint']
+checkpoint_interval = params['checkpoint_interval']
 savetime = params['savetime']
 totaltime = params['totaltime']
 dt = params['dt']
@@ -260,10 +266,22 @@ else:
 
 
 def saveStats(elapsed):
-    stats = "{}\t{}\t{}\n".format(elapsed.value, phi.cellVolumeAverage.value, F.value)
     if parallelComm.procID == 0:
-        with open(data['stats.txt'].make().abspath, 'a') as f:
-            f.write(stats)
+        fname = data['stats.txt'].make().abspath
+        if os.path.exists(fname):
+            os.rename(fname, fname + ".save")
+        try:
+            fp.numerix.savetxt(fname, 
+                               stats, 
+                               delimiter="\t", 
+                               header="\t".join(["time", "fraction", "energy"]))
+        except:
+            pass
+        if os.path.exists(fname + ".save"):
+            os.remove(fname + ".save")
+
+def current_stats(elapsed):
+    return [float(x) for x in [elapsed, phi.cellVolumeAverage, F]]
 
 def savePhi(elapsed):
     if parallelComm.procID == 0:
@@ -274,13 +292,18 @@ def savePhi(elapsed):
 
     fp.tools.dump.write((phi,), filename=fname)
 
+def checkpoint(elapsed):
+    saveStats(elapsed)
+    savePhi(elapsed)
+
 
 # ### Figure out when to save
 
 # In[14]:
 
 
-checkpoints = (fp.numerix.arange(int(elapsed / checkpoint), int(totaltime / checkpoint)) + 1) * checkpoint
+checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
+                                 int(totaltime / checkpoint_interval)) + 1) * checkpoint_interval
 for sometime in [savetime, totaltime]:
     if sometime > elapsed and sometime not in checkpoints: 
         checkpoints = fp.tools.concatenate([checkpoints, [sometime]])
@@ -292,12 +315,15 @@ checkpoints.sort()
 # In[15]:
 
 
-if parallelComm.procID == 0:
-    with open(data['stats.txt'].make().abspath, 'a') as f:
-        f.write("\t".join(["time", "fraction", "energy"]) + "\n")
+if params['restart']:
+    fname = os.path.join(os.path.dirname(params['restart']), 
+                         "stats.txt")
+    stats = fp.numerix.loadtxt(fname).tolist()
+else:
+    stats = []
+    stats.append(current_stats(elapsed))
 
-saveStats(elapsed)
-savePhi(elapsed)
+    checkpoint(elapsed)
 
 
 # ## Solve and output
@@ -315,10 +341,10 @@ for until in checkpoints:
         for sweep in range(5):
             eq.sweep(var=phi, dt=dt)
         elapsed.value = elapsed() + dt
-        saveStats(elapsed)
+        stats.append(current_stats(elapsed))
         dt = dt_save
 
-    savePhi(elapsed)
+    checkpoint(elapsed)
 
     if isnotebook:
         viewer.plot()
