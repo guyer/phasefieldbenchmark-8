@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # # Phase Field Benchmark 8a
@@ -27,12 +27,6 @@ from fipy.tools import parallelComm
 from fipy.meshes.factoryMeshes import _dnl
 
 from fipy.tools.debug import PRINT
-
-
-# In[2]:
-
-
-get_ipython().magic(u'pinfo fp.numerix.savetxt')
 
 
 # Jupyter notebook handles some things differently than from the commandline
@@ -353,4 +347,10 @@ for until in checkpoints:
 
     if isnotebook:
         viewer.plot()
+
+
+# In[ ]:
+
+
+
 
