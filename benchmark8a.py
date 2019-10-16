@@ -70,7 +70,6 @@ if isnotebook:
     params['Lx'] = 100.
     params['Ly'] = 100.
     params['checkpoint_interval'] = 1.5 * params['dt']
-    params['savetime'] = 4 * params['dt'] 
     params['totaltime'] = 100 * params['dt']
 
 
@@ -87,7 +86,6 @@ if isnotebook:
 
 
 checkpoint_interval = params['checkpoint_interval']
-savetime = params['savetime']
 totaltime = params['totaltime']
 dt = params['dt']
 
@@ -303,7 +301,7 @@ def checkpoint(elapsed):
 
 checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
                                  int(totaltime / checkpoint_interval)) + 1) * checkpoint_interval
-for sometime in [savetime, totaltime]:
+for sometime in [totaltime]:
     if sometime > elapsed and sometime not in checkpoints: 
         checkpoints = fp.tools.concatenate([checkpoints, [sometime]])
 checkpoints.sort()
