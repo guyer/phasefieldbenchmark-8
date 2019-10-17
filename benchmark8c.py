@@ -282,6 +282,7 @@ def saveStats(elapsed):
     if parallelComm.procID == 0:
         fname = data['stats.txt'].make().abspath
         if os.path.exists(fname):
+            # backup before overwrite
             os.rename(fname, fname + ".save")
         try:
             fp.numerix.savetxt(fname, 
@@ -289,7 +290,8 @@ def saveStats(elapsed):
                                delimiter="\t", 
                                header="\t".join(["time", "fraction", "energy"]))
         except:
-            pass
+            # restore from backup
+            os.rename(fname + ".save", fname)
         if os.path.exists(fname + ".save"):
             os.remove(fname + ".save")
 
@@ -338,7 +340,8 @@ else:
 
     checkpoint(elapsed)
     
-    fp.numerix.savetxt(data['nucleation_times.txt'].make().abspath, nucleation_times)
+    if parallelComm.procID == 0:
+        fp.numerix.savetxt(data['nucleation_times.txt'].make().abspath, nucleation_times)
 
 
 # ## Solve and output
