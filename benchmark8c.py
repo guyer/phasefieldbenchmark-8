@@ -12,7 +12,7 @@
 
 # ## Import Python modules
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -31,7 +31,7 @@ from fipy.tools.debug import PRINT
 
 # Jupyter notebook handles some things differently than from the commandline
 
-# In[2]:
+# In[ ]:
 
 
 try:
@@ -44,7 +44,7 @@ except:
 # ## Initialize
 # ### Load parameters
 
-# In[3]:
+# In[ ]:
 
 
 if isnotebook:
@@ -63,7 +63,7 @@ with open(yamlfile, 'r') as f:
 
 # ### Set any parameters for interactive notebook
 
-# In[4]:
+# In[ ]:
 
 
 if isnotebook:
@@ -84,7 +84,7 @@ if isnotebook:
 # Create a mesh based on parameters. Set
 # >  the domain size to 1000 × 1000... the spatial and temporal resolution by setting $\Delta x = \Delta y = 0.8$ and $\Delta t = 0.04$
 
-# In[5]:
+# In[ ]:
 
 
 checkpoint_interval = params['checkpoint_interval']
@@ -122,7 +122,7 @@ x, y = mesh.cellCenters[0], mesh.cellCenters[1]
 X, Y = mesh.faceCenters[0], mesh.faceCenters[1]
 
 
-# In[6]:
+# In[ ]:
 
 
 if isnotebook:
@@ -136,7 +136,7 @@ if isnotebook:
 # 
 # > [Set] the driving force to $\Delta f = 1 / (6\sqrt{2})$
 
-# In[7]:
+# In[ ]:
 
 
 Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
@@ -177,7 +177,7 @@ Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
 # \notag
 # \end{align}
 
-# In[8]:
+# In[ ]:
 
 
 mPhi = -2 * (1 - 2 * phi) + 30 * phi * (1 - phi) * Delta_f
@@ -195,7 +195,7 @@ eq = (fp.TransientTerm() ==
 # F[\phi] = \int\left[\frac{1}{2}(\nabla\phi)^2 + g(\phi) - \Delta f p(\phi)\right]\,dV \tag{6}
 # \end{align}
 
-# In[9]:
+# In[ ]:
 
 
 ftot = (0.5 * phi.grad.mag**2
@@ -213,7 +213,7 @@ F = ftot.cellVolumeAverage * volumes.sum()
 # \end{align}
 # to the $\phi$ values already in the domain, and handle the possible overlaps by setting $\phi = 1$ for all cells where $\phi > 1.$
 
-# In[10]:
+# In[ ]:
 
 
 def nucleus(x0, y0, r0):
@@ -229,7 +229,7 @@ def nucleus(x0, y0, r0):
 # 
 # > generate 100 random nucleation times in the range $t=0\dots100$ for adding the 100 seeds to the simulation domain.
 
-# In[11]:
+# In[ ]:
 
 
 if parallelComm.procID == 0:
@@ -252,7 +252,7 @@ nucleii = nucleii[nucleii[..., 0] > elapsed]
 
 # ### Setup ouput storage
 
-# In[12]:
+# In[ ]:
 
 
 try:
@@ -277,7 +277,7 @@ else:
 
 # ### Define output routines
 
-# In[13]:
+# In[ ]:
 
 
 def saveStats(elapsed):
@@ -316,7 +316,7 @@ def checkpoint(elapsed):
 
 # ### Figure out when to save
 
-# In[14]:
+# In[ ]:
 
 
 checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
@@ -329,7 +329,7 @@ checkpoints.sort()
 
 # ### Output initial condition
 
-# In[15]:
+# In[ ]:
 
 
 if params['restart']:
@@ -348,14 +348,14 @@ else:
 
 # ## Solve and output
 
-# In[16]:
+# In[ ]:
 
 
 times = fp.tools.concatenate([checkpoints, nucleii[..., 0]])
 times.sort()
 
 
-# In[17]:
+# In[ ]:
 
 
 for until in times:
@@ -371,7 +371,7 @@ for until in times:
         stats.append(current_stats(elapsed))
         dt = dt_save
 
-    for fx, fy, tt in nucleii[nucleii[..., 0] == elapsed.value]:
+    for fx, fy, tt in nucleii[fp.numerix.isclose(nucleii[..., 0], elapsed.value)]:
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
 
