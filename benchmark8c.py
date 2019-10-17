@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # # Phase Field Benchmark 8c
@@ -232,13 +232,17 @@ def nucleus(x0, y0, r0):
 # In[11]:
 
 
-if params['restart']:
-    fname = os.path.join(os.path.dirname(params['restart']), 
-                         "nucleation_times.txt")
-    nucleation_times = fp.numerix.loadtxt(fname)
+if parallelComm.procID == 0:
+    if params['restart']:
+        fname = os.path.join(os.path.dirname(params['restart']), 
+                             "nucleation_times.txt")
+        nucleation_times = fp.numerix.loadtxt(fname)
+    else:
+        nucleation_times = fp.numerix.random.random(params['numnuclei']) * totaltime
+        nucleation_times.sort()
 else:
-    nucleation_times = fp.numerix.random.random(params['numnuclei']) * totaltime
-    nucleation_times.sort()
+    nucleation_times = None
+nucleation_times = parallelComm.bcast(nucleation_times, root=0)
 nucleation_times = nucleation_times[nucleation_times > elapsed]
 
 
@@ -372,4 +376,10 @@ for until in times:
 
     if isnotebook:
         viewer.plot()
+
+
+# In[ ]:
+
+
+
 
