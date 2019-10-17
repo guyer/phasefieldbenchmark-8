@@ -223,7 +223,7 @@ def nucleus(x0, y0, r0):
 
 
 # ### Determine nucleation times
-# Either load nucleation times from `path/to/restart/nucleation_times.txt`, based on directory of `params['restart']`
+# Either load nucleation times from `path/to/restart/nucleii.txt`, based on directory of `params['restart']`
 # 
 # or
 # 
@@ -234,16 +234,18 @@ def nucleus(x0, y0, r0):
 
 if parallelComm.procID == 0:
     if params['restart']:
-        fname = os.path.join(os.path.dirname(params['restart']), 
-                             "nucleation_times.txt")
-        nucleation_times = fp.numerix.loadtxt(fname)
+        fname = os.path.join(os.path.dirname(params['restart']), "nucleii.txt")
+        nucleii = fp.numerix.loadtxt(fname)
     else:
-        nucleation_times = fp.numerix.random.random(params['numnuclei']) * totaltime
-        nucleation_times.sort()
+        times = fp.numerix.random.random(params['numnuclei']) * totaltime
+        times.sort()
+        nucleii = fp.numerix.concatenate((times[..., fp.numerix.newaxis],
+                                          fp.numerix.random.random((params['numnuclei'], 2))),
+                                         axis=-1)
 else:
-    nucleation_times = None
-nucleation_times = parallelComm.bcast(nucleation_times, root=0)
-nucleation_times = nucleation_times[nucleation_times > elapsed]
+    nucleii = None
+nucleii = parallelComm.bcast(nucleii, root=0)
+nucleii = nucleii[nucleii[..., 0] > elapsed]
 
 
 # ## Setup output
@@ -331,8 +333,7 @@ checkpoints.sort()
 
 
 if params['restart']:
-    fname = os.path.join(os.path.dirname(params['restart']), 
-                         "stats.txt")
+    fname = os.path.join(os.path.dirname(params['restart']), "stats.txt")
     stats = fp.numerix.loadtxt(fname).tolist()
 else:
     stats = []
@@ -341,7 +342,8 @@ else:
     checkpoint(elapsed)
     
     if parallelComm.procID == 0:
-        fp.numerix.savetxt(data['nucleation_times.txt'].make().abspath, nucleation_times)
+        fp.numerix.savetxt(data['nucleii.txt'].make().abspath, nucleii, 
+                           delimiter="\t", header="\t".join(["time", "x", "y"]))
 
 
 # ## Solve and output
@@ -349,7 +351,7 @@ else:
 # In[16]:
 
 
-times = fp.tools.concatenate([checkpoints, nucleation_times])
+times = fp.tools.concatenate([checkpoints, nucleii[..., 0]])
 times.sort()
 
 
@@ -369,8 +371,7 @@ for until in times:
         stats.append(current_stats(elapsed))
         dt = dt_save
 
-    if elapsed in nucleation_times:
-        fx, fy = fp.numerix.random.random(size=(2,))
+    for fx, fy, tt in nucleii[nucleii[..., 0] == elapsed.value]:
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
 
