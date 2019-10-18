@@ -245,7 +245,6 @@ if parallelComm.procID == 0:
 else:
     nucleii = None
 nucleii = parallelComm.bcast(nucleii, root=0)
-nucleii = nucleii[nucleii[..., 0] > elapsed]
 
 PRINT(nucleii)
 
@@ -355,6 +354,7 @@ else:
 
 times = fp.tools.concatenate([checkpoints, nucleii[..., 0]])
 times.sort()
+times = times[(times > elapsed) & (times < totaltime)]
 
 
 # In[ ]:
