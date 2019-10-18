@@ -72,7 +72,7 @@ if isnotebook:
     params['checkpoint_interval'] = 1.5 * params['dt']
     params['savetime'] = 4 * params['dt'] 
     params['totaltime'] = 100 * params['dt']
-#     params['restart'] = "t=1.830842598338903.tar.gz"
+#    params['restart'] = "t=0.0.tar.gz"
 
 
 # ### Initialize mesh and solution variables
@@ -247,6 +247,8 @@ else:
 nucleii = parallelComm.bcast(nucleii, root=0)
 nucleii = nucleii[nucleii[..., 0] > elapsed]
 
+PRINT(nucleii)
+
 
 # ## Setup output
 
@@ -371,7 +373,7 @@ for until in times:
         stats.append(current_stats(elapsed))
         dt = dt_save
 
-    for fx, fy, tt in nucleii[fp.numerix.isclose(nucleii[..., 0], elapsed.value)]:
+    for fx, fy, tt in nucleii[nucleii[..., 0] == until]:
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
 
