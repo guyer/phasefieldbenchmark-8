@@ -354,7 +354,7 @@ else:
 
 times = fp.tools.concatenate([checkpoints, nucleii[..., 0]])
 times.sort()
-times = times[(times > elapsed) & (times < totaltime)]
+times = times[(times > elapsed) & (times <= totaltime)]
 
 
 # In[ ]:
