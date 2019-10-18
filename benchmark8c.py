@@ -248,8 +248,6 @@ else:
     nucleii = None
 nucleii = parallelComm.bcast(nucleii, root=0)
 
-PRINT(nucleii)
-
 
 # ## Setup output
 
@@ -362,10 +360,7 @@ times = times[(times > elapsed) & (times <= totaltime)]
 # In[ ]:
 
 
-PRINT(times)
-
 for until in times:
-    PRINT(until)
     while elapsed.value < until:
         phi.updateOld()
         dt_until = (until - elapsed).value
@@ -379,23 +374,14 @@ for until in times:
         dt = dt_save
 
     for tt, fx, fy in nucleii[nucleii[..., 0] == until]:
-        PRINT(">nucleate: {} {} {}".format(tt, fx, fy))
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
-        PRINT("<nucleate")
-
-    PRINT("eeny")
               
     if elapsed in checkpoints:
         checkpoint(elapsed)
-
-    PRINT("meeny")
               
     if isnotebook:
         viewer.plot()
-        
-    PRINT("miney")
-PRINT("moe")
 
 
 # In[ ]:
