@@ -360,7 +360,10 @@ times.sort()
 # In[ ]:
 
 
+PRINT(times)
+
 for until in times:
+    PRINT(until)
     while elapsed.value < until:
         phi.updateOld()
         dt_until = (until - elapsed).value
@@ -390,6 +393,7 @@ for until in times:
         viewer.plot()
         
     PRINT("miney")
+PRINT("moe")
 
 
 # In[ ]:
