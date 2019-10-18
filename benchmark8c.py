@@ -374,14 +374,22 @@ for until in times:
         dt = dt_save
 
     for fx, fy, tt in nucleii[nucleii[..., 0] == until]:
+        PRINT(">nucleate: {} {} {}".format(tt, fx, fy))
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
+        PRINT("<nucleate)
 
+    PRINT("eeny")
+              
     if elapsed in checkpoints:
         checkpoint(elapsed)
 
+    PRINT("meeny")
+              
     if isnotebook:
         viewer.plot()
+        
+    PRINT("miney")
 
 
 # In[ ]:
