@@ -96,8 +96,10 @@ if params['restart']:
     phi, = fp.tools.dump.read(filename=params['restart'])
     mesh = phi.mesh
 
-    Lx = max(mesh.x) - min(mesh.x)
-    Ly = max(mesh.y) - min(mesh.y)
+    X, Y = mesh.faceCenters
+    
+    Lx = mesh.communicator.MaxAll(max(X)) - mesh.communicator.MinAll(min(X))
+    Ly = mesh.communicator.MaxAll(max(Y)) - mesh.communicator.MinAll(min(Y))
 
     # scanf("%g") simulator
     # https://docs.python.org/3/library/re.html#simulating-scanf
