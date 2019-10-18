@@ -342,9 +342,9 @@ else:
 
     checkpoint(elapsed)
     
-    if parallelComm.procID == 0:
-        fp.numerix.savetxt(data['nucleii.txt'].make().abspath, nucleii, 
-                           delimiter="\t", header="\t".join(["time", "x", "y"]))
+if parallelComm.procID == 0:
+    fp.numerix.savetxt(data['nucleii.txt'].make().abspath, nucleii, 
+                       delimiter="\t", header="\t".join(["time", "x", "y"]))
 
 
 # ## Solve and output
@@ -376,7 +376,7 @@ for until in times:
         stats.append(current_stats(elapsed))
         dt = dt_save
 
-    for fx, fy, tt in nucleii[nucleii[..., 0] == until]:
+    for tt, fx, fy in nucleii[nucleii[..., 0] == until]:
         PRINT(">nucleate: {} {} {}".format(tt, fx, fy))
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
