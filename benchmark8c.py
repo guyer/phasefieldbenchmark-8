@@ -377,7 +377,7 @@ for until in times:
         PRINT(">nucleate: {} {} {}".format(tt, fx, fy))
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
         phi.setValue(1., where=phi > 1.)
-        PRINT("<nucleate)
+        PRINT("<nucleate")
 
     PRINT("eeny")
               
