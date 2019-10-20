@@ -335,12 +335,13 @@ checkpoints.sort()
 
 if params['restart']:
     fname = os.path.join(os.path.dirname(params['restart']), "stats.txt")
-    stats = fp.numerix.loadtxt(fname).tolist()
+    stats = fp.numerix.loadtxt(fname)
+    stats = stats[stats[..., 0] <= elapsed].tolist()
 else:
     stats = []
     stats.append(current_stats(elapsed))
 
-    checkpoint(elapsed)
+checkpoint(elapsed)
     
 if parallelComm.procID == 0:
     fp.numerix.savetxt(data['nucleii.txt'].make().abspath, nucleii, 
