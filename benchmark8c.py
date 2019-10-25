@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # # Phase Field Benchmark 8c
@@ -383,10 +383,4 @@ for until in times:
               
     if isnotebook:
         viewer.plot()
-
-
-# In[ ]:
-
-
-
 
