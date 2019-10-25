@@ -4,3 +4,4 @@ Data/
 \#*\#
 *~
 slurm-*.out
+*.pyc
