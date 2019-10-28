@@ -300,7 +300,7 @@ checkpoints.sort()
 
 if params['restart']:
     fname = os.path.join(os.path.dirname(params['restart']), "stats.txt")
-    stats = fp.numerix.loadtxt(fname)
+    stats = fp.numerix.loadtxt(fname, skiprows=1)
     stats = stats[stats[..., 0] <= elapsed].tolist()
 else:
     stats = []
