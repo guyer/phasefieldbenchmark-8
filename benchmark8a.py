@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # # Phase Field Benchmark 8a
@@ -93,8 +93,10 @@ if params['restart']:
     phi, = fp.tools.dump.read(filename=params['restart'])
     mesh = phi.mesh
 
-    Lx = max(mesh.x) - min(mesh.x)
-    Ly = max(mesh.y) - min(mesh.y)
+    X, Y = mesh.faceCenters
+
+    Lx = mesh.communicator.MaxAll(max(X)) - mesh.communicator.MinAll(min(X))
+    Ly = mesh.communicator.MaxAll(max(Y)) - mesh.communicator.MinAll(min(Y))
 
     # scanf("%g") simulator
     # https://docs.python.org/3/library/re.html#simulating-scanf
@@ -266,14 +268,17 @@ def saveStats(elapsed):
     if parallelComm.procID == 0:
         fname = data['stats.txt'].make().abspath
         if os.path.exists(fname):
+            # backup before overwrite
             os.rename(fname, fname + ".save")
         try:
-            fp.numerix.savetxt(fname, 
-                               stats, 
-                               delimiter="\t", 
+            fp.numerix.savetxt(fname,
+                               stats,
+                               delimiter="\t",
+                               comments='',
                                header="\t".join(["time", "fraction", "energy"]))
         except:
-            pass
+            # restore from backup
+            os.rename(fname + ".save", fname)
         if os.path.exists(fname + ".save"):
             os.remove(fname + ".save")
 
@@ -313,14 +318,14 @@ checkpoints.sort()
 
 
 if params['restart']:
-    fname = os.path.join(os.path.dirname(params['restart']), 
-                         "stats.txt")
-    stats = fp.numerix.loadtxt(fname).tolist()
+    fname = os.path.join(os.path.dirname(params['restart']), "stats.txt")
+    stats = fp.numerix.loadtxt(fname, skiprows=1)
+    stats = stats[stats[..., 0] <= elapsed].tolist()
 else:
     stats = []
     stats.append(current_stats(elapsed))
 
-    checkpoint(elapsed)
+checkpoint(elapsed)
 
 
 # ## Solve and output
@@ -345,10 +350,4 @@ for until in checkpoints:
 
     if isnotebook:
         viewer.plot()
-
-
-# In[ ]:
-
-
-
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # # Phase Field Benchmark 8c
@@ -237,7 +237,7 @@ def nucleus(x0, y0, r0):
 if parallelComm.procID == 0:
     if params['restart']:
         fname = os.path.join(os.path.dirname(params['restart']), "nucleii.txt")
-        nucleii = fp.numerix.loadtxt(fname)
+        nucleii = fp.numerix.loadtxt(fnamem, skiprows=1)
     else:
         times = fp.numerix.random.random(params['numnuclei']) * totaltime
         times.sort()
@@ -288,9 +288,10 @@ def saveStats(elapsed):
             # backup before overwrite
             os.rename(fname, fname + ".save")
         try:
-            fp.numerix.savetxt(fname, 
-                               stats, 
-                               delimiter="\t", 
+            fp.numerix.savetxt(fname,
+                               stats,
+                               delimiter="\t",
+                               comments='',
                                header="\t".join(["time", "fraction", "energy"]))
         except:
             # restore from backup
@@ -335,7 +336,7 @@ checkpoints.sort()
 
 if params['restart']:
     fname = os.path.join(os.path.dirname(params['restart']), "stats.txt")
-    stats = fp.numerix.loadtxt(fname)
+    stats = fp.numerix.loadtxt(fname, skiprows=1)
     stats = stats[stats[..., 0] <= elapsed].tolist()
 else:
     stats = []
@@ -345,7 +346,8 @@ checkpoint(elapsed)
     
 if parallelComm.procID == 0:
     fp.numerix.savetxt(data['nucleii.txt'].make().abspath, nucleii, 
-                       delimiter="\t", header="\t".join(["time", "x", "y"]))
+                       delimiter="\t", comments='',
+                       header="\t".join(["time", "x", "y"]))
 
 
 # ## Solve and output
@@ -383,10 +385,4 @@ for until in times:
               
     if isnotebook:
         viewer.plot()
-
-
-# In[ ]:
-
-
-
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
 # # Phase Field Benchmark 8d
@@ -12,7 +12,7 @@
 
 # ## Import Python modules
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -31,7 +31,7 @@ from fipy.tools.debug import PRINT
 
 # Jupyter notebook handles some things differently than from the commandline
 
-# In[2]:
+# In[ ]:
 
 
 try:
@@ -44,7 +44,7 @@ except:
 # ## Initialize
 # ### Load parameters
 
-# In[3]:
+# In[ ]:
 
 
 if isnotebook:
@@ -63,13 +63,14 @@ with open(yamlfile, 'r') as f:
 
 # ### Set any parameters for interactive notebook
 
-# In[4]:
+# In[ ]:
 
 
 if isnotebook:
-    params['dt'] = 1.0
-    params['checkpoint_interval'] = 1.5 * params['dt']
-    params['totaltime'] = 100 * params['dt']
+    params['dt'] = 10.0
+    params['checkpoint_interval'] = 10. * params['dt']
+    params['factor'] = 1.02
+#    params['totaltime'] = 100 * params['dt']
 
 
 # ### Initialize mesh and solution variables
@@ -81,7 +82,7 @@ if isnotebook:
 # Create a mesh based on parameters.
 # > Use a simulation domain of width 40 and height 20. Use Dirichlet boundary conditions on the bottom side by setting $\phi = 0.9$ along the middle part of length 20 of the boundary and $\phi = 0$ outside.
 
-# In[5]:
+# In[ ]:
 
 
 checkpoint_interval = params['checkpoint_interval']
@@ -127,7 +128,7 @@ phi.constrain(0.0, where=(mesh.facesBottom
                              | (X < Lx / 2 - params["radius"]))))
 
 
-# In[6]:
+# In[ ]:
 
 
 if isnotebook:
@@ -143,7 +144,7 @@ if isnotebook:
 # 
 # > Repeat the simulation with increasing/decreasing the driving force by 2%
 
-# In[7]:
+# In[ ]:
 
 
 Delta_f = params['factor'] * 1. / (30 * fp.numerix.sqrt(2.))
@@ -184,7 +185,7 @@ Delta_f = params['factor'] * 1. / (30 * fp.numerix.sqrt(2.))
 # \notag
 # \end{align}
 
-# In[8]:
+# In[ ]:
 
 
 mPhi = -2 * (1 - 2 * phi) + 30 * phi * (1 - phi) * Delta_f
@@ -202,7 +203,7 @@ eq = (fp.TransientTerm() ==
 # F[\phi] = \int\left[\frac{1}{2}(\nabla\phi)^2 + g(\phi) - \Delta f p(\phi)\right]\,dV \tag{6}
 # \end{align}
 
-# In[9]:
+# In[ ]:
 
 
 ftot = (0.5 * phi.grad.mag**2
@@ -216,7 +217,7 @@ F = ftot.cellVolumeAverage * volumes.sum()
 
 # ### Setup ouput storage
 
-# In[10]:
+# In[ ]:
 
 
 try:
@@ -241,7 +242,7 @@ else:
 
 # ### Define output routines
 
-# In[11]:
+# In[ ]:
 
 
 def saveStats(elapsed):
@@ -251,9 +252,10 @@ def saveStats(elapsed):
             # backup before overwrite
             os.rename(fname, fname + ".save")
         try:
-            fp.numerix.savetxt(fname, 
-                               stats, 
-                               delimiter="\t", 
+            fp.numerix.savetxt(fname,
+                               stats,
+                               delimiter="\t",
+                               comments='',
                                header="\t".join(["time", "fraction", "energy"]))
         except:
             # restore from backup
@@ -280,7 +282,7 @@ def checkpoint(elapsed):
 
 # ### Figure out when to save
 
-# In[12]:
+# In[ ]:
 
 
 checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
@@ -293,12 +295,12 @@ checkpoints.sort()
 
 # ### Output initial condition
 
-# In[13]:
+# In[ ]:
 
 
 if params['restart']:
     fname = os.path.join(os.path.dirname(params['restart']), "stats.txt")
-    stats = fp.numerix.loadtxt(fname)
+    stats = fp.numerix.loadtxt(fname, skiprows=1)
     stats = stats[stats[..., 0] <= elapsed].tolist()
 else:
     stats = []
@@ -319,8 +321,9 @@ for until in checkpoints:
         dt_save = dt
         if dt_until < dt:
             dt = dt_until
-        for sweep in range(5):
-            eq.sweep(var=phi, dt=dt)
+        for sweep in range(30):
+            res = eq.sweep(var=phi, dt=dt)
+#            print elapsed, dt, sweep, res
         elapsed.value = elapsed() + dt
         stats.append(current_stats(elapsed))
         dt = dt_save
@@ -329,10 +332,4 @@ for until in checkpoints:
 
     if isnotebook:
         viewer.plot()
-
-
-# In[ ]:
-
-
-
 
