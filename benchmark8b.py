@@ -275,8 +275,9 @@ def saveStats(elapsed):
             os.rename(fname, fname + ".save")
         try:
             fp.numerix.savetxt(fname, 
-                               stats, 
-                               delimiter="\t", 
+                               stats,
+                               delimiter="\t",
+                               comments='',
                                header="\t".join(["time", "fraction", "energy"]))
         except:
             # restore from backup

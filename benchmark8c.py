@@ -288,9 +288,10 @@ def saveStats(elapsed):
             # backup before overwrite
             os.rename(fname, fname + ".save")
         try:
-            fp.numerix.savetxt(fname, 
-                               stats, 
-                               delimiter="\t", 
+            fp.numerix.savetxt(fname,
+                               stats,
+                               delimiter="\t",
+                               comments='',
                                header="\t".join(["time", "fraction", "energy"]))
         except:
             # restore from backup
