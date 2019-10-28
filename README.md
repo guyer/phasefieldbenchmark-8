@@ -129,3 +129,6 @@ and ensure that `srun` is installed on cluster nodes.
 
 Would `SlurmMPILaunchMode` take care of queuing *and* get rid of the slurm 
 script? Needs `salloc` installed on cluster nodes.
+
+No. `SlurmMPILaunchMode` does work, but it doesn't really "queue". The
+`smt` process remains running, so it's not useful for fire-and-forget.
