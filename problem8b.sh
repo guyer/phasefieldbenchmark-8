@@ -1,4 +1,7 @@
 #!/bin/bash
+# invoke with
+# $ sbatch --ntasks=16 problem8b.sh <env> <solver> <tag> [args]
+
 #SBATCH --partition rack3             # -p, partition
 #SBATCH --time 12:00:00               # -t, time (hh:mm:ss or dd-hh:mm:ss)
 #SBATCH --nodes=1                     # -N, total number of machines
@@ -6,9 +9,15 @@
 #SBATCH -J Problem-8b
 #SBATCH -D /data/guyer/CHiMaD/phase_field/phasefieldbenchmark-8
 
-. /tmp/guyer/miniconda2/etc/profile.d/conda.sh
+CONDAENV=$1
+SOLVER=$2
+TAG=$3
 
-conda activate cluster_fipy
+shift
+shift
+shift
+
+source /data/guyer/miniconda3/bin/activate $CONDAENV
 
 export OMP_NUM_THREADS=1
-/tmp/guyer/miniconda2/envs/cluster_fipy/bin/mpiexec -n 1 smt run -n $SLURM_NTASKS --main benchmark8b.py params8b.yaml "$@"
+FIPY_SOLVERS=$SOLVER mpiexec -n 1 smt run --tag $TAG -n $SLURM_NTASKS --main benchmark8b.py params8b.yaml "$@"
