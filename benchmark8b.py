@@ -1,9 +1,11 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # # Phase Field Benchmark 8b
 # ## Explicit nucleation, multiple seeds at $t=0$
-# FiPy implementation of problem 2.2 in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
+# FiPy implementation of problem 2 in *Nucleation Benchmark Problem*, Wenkun Wu *et al.*, January 16, 2020
+# 
+# Based on problem 2.2 in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
 
 # **Do not edit `benchmark8b.py`**. Generate the batch-runnable file from the notebook with
 # ```bash
@@ -20,7 +22,7 @@ import re
 import sys
 import yaml
 
-import datreant.core as dtr
+import datreant as dtr
 
 import fipy as fp
 from fipy.tools import parallelComm
@@ -81,7 +83,9 @@ if isnotebook:
 # or
 # 
 # Create a mesh based on parameters. Set
-# >  the domain size to 1000 × 1000... the spatial and temporal resolution by setting $\Delta x = \Delta y = 0.8$ and $\Delta t = 0.04$
+# >  the domain size to 500 × 500... the spatial and temporal resolution by setting $\Delta x = \Delta y = 0.8$ and $\Delta t = 0.04$
+# 
+# ($\Delta x$, $\Delta y$, and $\Delta t$ no longer stipulated in rev 2, but continue with same for now)
 
 # In[5]:
 
@@ -143,6 +147,14 @@ if isnotebook:
 Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
 
 
+# > $$r_c = \frac{1}{3\sqrt{2}}\frac{1}{\Delta f} = 2.0$$
+
+# In[8]:
+
+
+rc = 2.0
+
+
 # and define the governing equation 
 # > \begin{align}
 # \frac{\partial\phi}{\partial t} &= \nabla^2\phi - g'(\phi) + \Delta f p'(\phi) \tag{7}
@@ -178,7 +190,7 @@ Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
 # \notag
 # \end{align}
 
-# In[8]:
+# In[9]:
 
 
 mPhi = -2 * (1 - 2 * phi) + 30 * phi * (1 - phi) * Delta_f
@@ -196,7 +208,7 @@ eq = (fp.TransientTerm() ==
 # F[\phi] = \int\left[\frac{1}{2}(\nabla\phi)^2 + g(\phi) - \Delta f p(\phi)\right]\,dV \tag{6}
 # \end{align}
 
-# In[9]:
+# In[10]:
 
 
 ftot = (0.5 * phi.grad.mag**2
@@ -214,7 +226,7 @@ F = ftot.cellVolumeAverage * volumes.sum()
 # \end{align}
 # to the $\phi$ values already in the domain, and handle the possible overlaps by setting $\phi = 1$ for all cells where $\phi > 1.$
 
-# In[10]:
+# In[11]:
 
 
 def nucleus(x0, y0, r0):
@@ -223,14 +235,14 @@ def nucleus(x0, y0, r0):
     return (1 - fp.numerix.tanh((r - r0) / fp.numerix.sqrt(2.))) / 2
 
 
-# > Generate random positions with uniform distribution for 100 supercritical seeds with $r_0 = 1.1r^∗$. 
+# > Generate random positions with uniform distribution for 25 supercritical seeds with $r_0 = 1.1r_c$. 
 
-# In[11]:
+# In[12]:
 
 
 if not params['restart']:
-    for fx, fy in fp.numerix.random.random(size=(100, 2)):
-        phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * 2))
+    for fx, fy in fp.numerix.random.random(size=(25, 2)):
+        phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * rc))
 
     phi.setValue(1., where=phi > 1.)
 
@@ -239,7 +251,7 @@ if not params['restart']:
 
 # ### Setup ouput storage
 
-# In[12]:
+# In[13]:
 
 
 try:
@@ -262,9 +274,103 @@ else:
     data = dummyTreant()
 
 
+# ### Create particle counter
+
+# In[40]:
+
+
+from scipy import ndimage
+
+class LabelVariable(fp.CellVariable):
+    """Label features in `var` using scipy.ndimage.label
+    
+    Parameters
+    ----------
+    var : ~fipy.variables.cellVariable.CellVariable
+        Field to be labeled. Any values equal to or greater than `threshold`
+        are counted as features and values below are considered the background.
+        
+        .. important:
+           Only sensible if `var` is defined on a `...Grid...` Mesh.
+    structure : array_like, optional
+        A structuring element that defines feature connections.
+        `structure` must be centrosymmetric
+        (see ```scipy.ndimage.label`` Notes
+        <https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.label.html#scipy.ndimage.label>`_).
+        If no structuring element is provided,
+        one is automatically generated with a squared connectivity equal to
+        one.  That is, for a 2-D `input` array, the default structuring element
+        is::
+            [[0,1,0],
+             [1,1,1],
+             [0,1,0]]
+    threshold : float, optional
+        Boundary value between features (inclusive) and background.
+    dtype : date-type, optional
+        The desired data-type for the labels. Note that the type must be able
+        to store the largest label, or this Variable will raise an Exception.
+        Default: int.
+    """
+    def __init__(self, var, structure=None, threshold=0.5, dtype=int):
+        # We want our value to hold dtype,
+        # but if we pass an array, the CellVariable
+        # will probably be wonky
+        value = fp.numerix.array(0.).astype(dtype).item()
+        fp.CellVariable.__init__(self,
+                                 mesh=var.mesh,
+                                 value=value,
+                                 elementshape=var.shape[:-1])
+        self.var = self._requires(var)
+        self.structure = structure
+        self.threshold = threshold
+        self.dtype = dtype
+        self._num_features = None
+    
+    def _calcValue(self):
+        """Label features of `var`
+        
+        Side-effect: sets self._num_features
+        """
+        arr = (self.var.globalValue > self.threshold).astype(self.dtype)
+        arr = arr.reshape(self.var.mesh.shape[::-1])
+        self._num_features = ndimage.label(input=arr,
+                                           structure=self.structure,
+                                           output=arr)
+        return arr.flat
+        
+    @property
+    def num_features(self):
+        """How many objects were found
+        """
+        if self.stale or not self._isCached() or self._num_features is None:
+            self._getValue()
+
+        return self._num_features
+
+
+# In[44]:
+
+
+labels = LabelVariable(phi, threshold=0.5)
+
+
+# In[54]:
+
+
+if isnotebook:
+    labelViewer = fp.Viewer(vars=labels, datamin=0, datamax=25)
+    labelViewer.plot()
+
+
+# In[46]:
+
+
+labels.num_features
+
+
 # ### Define output routines
 
-# In[13]:
+# In[50]:
 
 
 def saveStats(elapsed):
@@ -278,7 +384,7 @@ def saveStats(elapsed):
                                stats,
                                delimiter="\t",
                                comments='',
-                               header="\t".join(["time", "fraction", "energy"]))
+                               header="\t".join(["time", "fraction", "particle_count", "energy"]))
         except:
             # restore from backup
             os.rename(fname + ".save", fname)
@@ -286,7 +392,7 @@ def saveStats(elapsed):
             os.remove(fname + ".save")
 
 def current_stats(elapsed):
-    return [float(x) for x in [elapsed, phi.cellVolumeAverage, F]]
+    return [float(x) for x in [elapsed, phi.cellVolumeAverage, labels.num_features, F]]
 
 def savePhi(elapsed):
     if parallelComm.procID == 0:
@@ -304,7 +410,7 @@ def checkpoint(elapsed):
 
 # ### Figure out when to save
 
-# In[14]:
+# In[51]:
 
 
 checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
@@ -317,7 +423,7 @@ checkpoints.sort()
 
 # ### Output initial condition
 
-# In[15]:
+# In[52]:
 
 
 if params['restart']:
@@ -333,7 +439,7 @@ checkpoint(elapsed)
 
 # ## Solve and output
 
-# In[16]:
+# In[ ]:
 
 
 for until in checkpoints:
@@ -353,4 +459,11 @@ for until in checkpoints:
 
     if isnotebook:
         viewer.plot()
+        labelViewer.plot()
+
+
+# In[ ]:
+
+
+
 
