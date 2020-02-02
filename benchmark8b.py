@@ -239,7 +239,12 @@ def nucleus(x0, y0, r0):
 
 
 if not params['restart']:
-    for fx, fy in fp.numerix.random.random(size=(25, 2)):
+    if parallelComm.procID == 0:
+        seeds = fp.numerix.random.random(size=(25, 2))
+    else:
+        seeds = None
+    seeds = parallelComm.bcast(seeds)
+    for fx, fy in seeds:
         phi.setValue(phi + nucleus(x0=fx * Lx, y0=fy * Ly, r0=params['factor'] * rc))
 
     phi.setValue(1., where=phi > 1.)
