@@ -28,8 +28,6 @@ import fipy as fp
 from fipy.tools import parallelComm
 from fipy.meshes.factoryMeshes import _dnl
 
-from fipy.tools.debug import PRINT
-
 
 # Jupyter notebook handles some things differently than from the commandline
 
@@ -265,7 +263,7 @@ except:
     output = os.getcwd()
     
 if parallelComm.procID == 0:
-    print "storing results in {0}".format(output)
+    print("storing results in {0}".format(output))
     data = dtr.Treant(output)
 else:
     class dummyTreant(object):
@@ -276,7 +274,7 @@ else:
 
 # ### Create particle counter
 
-# In[40]:
+# In[14]:
 
 
 from scipy import ndimage
@@ -332,7 +330,8 @@ class LabelVariable(fp.CellVariable):
         Side-effect: sets self._num_features
         """
         arr = (self.var.globalValue > self.threshold).astype(self.dtype)
-        arr = arr.reshape(self.var.mesh.shape[::-1])
+        shape = (self.var.mesh.args['nx'], self.var.mesh.args['ny'])
+        arr = arr.reshape(shape)
         self._num_features = ndimage.label(input=arr,
                                            structure=self.structure,
                                            output=arr)
@@ -348,13 +347,13 @@ class LabelVariable(fp.CellVariable):
         return self._num_features
 
 
-# In[44]:
+# In[15]:
 
 
 labels = LabelVariable(phi, threshold=0.5)
 
 
-# In[54]:
+# In[16]:
 
 
 if isnotebook:
@@ -362,7 +361,7 @@ if isnotebook:
     labelViewer.plot()
 
 
-# In[46]:
+# In[17]:
 
 
 labels.num_features
@@ -370,7 +369,7 @@ labels.num_features
 
 # ### Define output routines
 
-# In[50]:
+# In[19]:
 
 
 def saveStats(elapsed):
@@ -410,7 +409,7 @@ def checkpoint(elapsed):
 
 # ### Figure out when to save
 
-# In[51]:
+# In[20]:
 
 
 checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
@@ -423,7 +422,7 @@ checkpoints.sort()
 
 # ### Output initial condition
 
-# In[52]:
+# In[21]:
 
 
 if params['restart']:
@@ -439,7 +438,7 @@ checkpoint(elapsed)
 
 # ## Solve and output
 
-# In[ ]:
+# In[22]:
 
 
 for until in checkpoints:
