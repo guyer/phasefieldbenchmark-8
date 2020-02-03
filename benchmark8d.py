@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # # Phase Field Benchmark 8d
@@ -20,13 +20,11 @@ import re
 import sys
 import yaml
 
-import datreant.core as dtr
+import datreant as dtr
 
 import fipy as fp
 from fipy.tools import parallelComm
 from fipy.meshes.factoryMeshes import _dnl
-
-from fipy.tools.debug import PRINT
 
 
 # Jupyter notebook handles some things differently than from the commandline
@@ -231,7 +229,7 @@ except:
     output = os.getcwd()
     
 if parallelComm.procID == 0:
-    print "storing results in {0}".format(output)
+    print("storing results in {0}".format(output))
     data = dtr.Treant(output)
 else:
     class dummyTreant(object):
@@ -332,4 +330,10 @@ for until in checkpoints:
 
     if isnotebook:
         viewer.plot()
+
+
+# In[ ]:
+
+
+
 
