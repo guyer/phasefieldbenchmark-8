@@ -19,5 +19,4 @@ shift
 
 source /data/guyer/miniconda3/bin/activate $CONDAENV
 
-export OMP_NUM_THREADS=1
-FIPY_SOLVERS=$SOLVER mpiexec -n 1 smt run --tag $TAG -n $SLURM_NTASKS --main benchmark8b.py params8b.yaml "$@"
+OMP_NUM_THREADS=1 FIPY_SOLVERS=$SOLVER mpiexec -n 1 smt run --tag $TAG -n $SLURM_NTASKS --main benchmark8b.py params8b.yaml "$@"
