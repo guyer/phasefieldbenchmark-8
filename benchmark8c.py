@@ -1,9 +1,11 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # # Phase Field Benchmark 8c
 # ## Explicit nucleation, multiple seeds at random times
-# FiPy implementation of problem 2.3 in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
+# FiPy implementation of problem 3 in *Nucleation Benchmark Problem*, Wenkun Wu *et al.*, January 16, 2020
+# 
+# Based on problem 2.3 in *Benchmark problems for nucleation*, Tamás Pusztai, September 25, 2019
 
 # **Do not edit `benchmark8c.py`**. Generate the batch-runnable file from the notebook with
 # ```bash
@@ -20,13 +22,11 @@ import re
 import sys
 import yaml
 
-import datreant.core as dtr
+import datreant as dtr
 
 import fipy as fp
 from fipy.tools import parallelComm
 from fipy.meshes.factoryMeshes import _dnl
-
-from fipy.tools.debug import PRINT
 
 
 # Jupyter notebook handles some things differently than from the commandline
@@ -142,6 +142,14 @@ if isnotebook:
 
 
 Delta_f = 1. / (6 * fp.numerix.sqrt(2.))
+
+
+# > $$r_c = \frac{1}{3\sqrt{2}}\frac{1}{\Delta f} = 2.0$$
+
+# In[ ]:
+
+
+rc = 2.0
 
 
 # and define the governing equation 
@@ -267,13 +275,102 @@ except:
     output = os.getcwd()
     
 if parallelComm.procID == 0:
-    print "storing results in {0}".format(output)
+    print("storing results in {0}".format(output))
     data = dtr.Treant(output)
 else:
     class dummyTreant(object):
         categories = dict()
 
     data = dummyTreant()
+
+
+# ### Create particle counter
+
+# In[ ]:
+
+
+from scipy import ndimage
+
+class LabelVariable(fp.CellVariable):
+    """Label features in `var` using scipy.ndimage.label
+    
+    Parameters
+    ----------
+    var : ~fipy.variables.cellVariable.CellVariable
+        Field to be labeled. Any values equal to or greater than `threshold`
+        are counted as features and values below are considered the background.
+        
+        .. important:
+           Only sensible if `var` is defined on a `...Grid...` Mesh.
+    structure : array_like, optional
+        A structuring element that defines feature connections.
+        `structure` must be centrosymmetric
+        (see ```scipy.ndimage.label`` Notes
+        <https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.label.html#scipy.ndimage.label>`_).
+        If no structuring element is provided,
+        one is automatically generated with a squared connectivity equal to
+        one.  That is, for a 2-D `input` array, the default structuring element
+        is::
+            [[0,1,0],
+             [1,1,1],
+             [0,1,0]]
+    threshold : float, optional
+        Boundary value between features (inclusive) and background.
+    dtype : date-type, optional
+        The desired data-type for the labels. Note that the type must be able
+        to store the largest label, or this Variable will raise an Exception.
+        Default: int.
+    """
+    def __init__(self, var, structure=None, threshold=0.5, dtype=int):
+        # We want our value to hold dtype,
+        # but if we pass an array, the CellVariable
+        # will probably be wonky
+        value = fp.numerix.array(0.).astype(dtype).item()
+        fp.CellVariable.__init__(self,
+                                 mesh=var.mesh,
+                                 value=value,
+                                 elementshape=var.shape[:-1])
+        self.var = self._requires(var)
+        self.structure = structure
+        self.threshold = threshold
+        self.dtype = dtype
+        self._num_features = None
+    
+    def _calcValue(self):
+        """Label features of `var`
+        
+        Side-effect: sets self._num_features
+        """
+        arr = (self.var.globalValue > self.threshold).astype(self.dtype)
+        shape = (self.var.mesh.args['nx'], self.var.mesh.args['ny'])
+        arr = arr.reshape(shape)
+        self._num_features = ndimage.label(input=arr,
+                                           structure=self.structure,
+                                           output=arr)
+        return arr.flat
+        
+    @property
+    def num_features(self):
+        """How many objects were found
+        """
+        if self.stale or not self._isCached() or self._num_features is None:
+            self._getValue()
+
+        return self._num_features
+
+
+# In[ ]:
+
+
+labels = LabelVariable(phi, threshold=0.5)
+
+
+# In[ ]:
+
+
+if isnotebook:
+    labelViewer = fp.Viewer(vars=labels, datamin=0, datamax=25)
+    labelViewer.plot()
 
 
 # ### Define output routines
@@ -292,7 +389,7 @@ def saveStats(elapsed):
                                stats,
                                delimiter="\t",
                                comments='',
-                               header="\t".join(["time", "fraction", "energy"]))
+                               header="\t".join(["time", "fraction", "particle_count", "energy"]))
         except:
             # restore from backup
             os.rename(fname + ".save", fname)
@@ -300,7 +397,7 @@ def saveStats(elapsed):
             os.remove(fname + ".save")
 
 def current_stats(elapsed):
-    return [float(x) for x in [elapsed, phi.cellVolumeAverage, F]]
+    return [float(x) for x in [elapsed, phi.cellVolumeAverage, labels.num_features, F]]
 
 def savePhi(elapsed):
     if parallelComm.procID == 0:
@@ -385,4 +482,11 @@ for until in times:
               
     if isnotebook:
         viewer.plot()
+        labelViewer.plot()
+
+
+# In[ ]:
+
+
+
 
