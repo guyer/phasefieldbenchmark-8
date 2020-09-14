@@ -14,13 +14,13 @@
 
 # In[1]:
 
-
+from pathlib import Path
 import os
 import re
 import sys
 import yaml
 
-import datreant.core as dtr
+# import datreant.core as dtr
 
 import fipy as fp
 from fipy.tools import parallelComm
@@ -45,7 +45,6 @@ except:
 # ### Load parameters
 
 # In[3]:
-
 
 if isnotebook:
     yamlfile = "params8a.yaml"
@@ -74,11 +73,11 @@ if isnotebook:
 
 
 # ### Initialize mesh and solution variables
-# 
+#
 # Either restart from some `path/to/t={time}.tar.gz`, where the time is assigned to `elapsed`
-# 
+#
 # or
-# 
+#
 # Create a mesh based on parameters.
 # > Make a 2D simulation domain of size 100 × 100 units... the time step $\Delta t = 0.01$ and the spatial resolution $\Delta x = \Delta y = 0.4$ with periodic boundary conditions
 
@@ -116,7 +115,7 @@ else:
     phi = fp.CellVariable(mesh=mesh, name="$\phi$", value=0., hasOld=True)
 
     elapsed = fp.Variable(name="$t$", value=0.)
-    
+
 x, y = mesh.cellCenters[0], mesh.cellCenters[1]
 X, Y = mesh.faceCenters[0], mesh.faceCenters[1]
 
@@ -132,7 +131,7 @@ if isnotebook:
 # ## Define governing equation
 
 # > use only the nondimensional forms of the phase-field and nucleation equations, but without the tildes, for simplicity
-# 
+#
 # > [Set] the driving force to $\Delta f = 1 / (15\sqrt{2})$
 
 # In[7]:
@@ -141,16 +140,16 @@ if isnotebook:
 Delta_f = 1. / (15 * fp.numerix.sqrt(2.))
 
 
-# and define the governing equation 
+# and define the governing equation
 # > \begin{align}
 # \frac{\partial\phi}{\partial t} &= \nabla^2\phi - g'(\phi) + \Delta f p'(\phi) \tag{7}
 # \end{align}
-# 
+#
 # > $$g(\phi) = \phi^2(1 - \phi)^2 \qquad p(\phi)=\phi^3(10 - 15\phi + 6\phi^2)$$
-# 
+#
 # Following [`examples/phase/simple.py`](https://www.ctcms.nist.gov/fipy/examples/phase/generated/examples.phase.simple.html)
-# 
-# 
+#
+#
 # \begin{align}
 # \frac{\partial\phi}{\partial t}
 # &= \nabla^2\phi + m_\phi \phi (1 - \phi) \notag
@@ -159,9 +158,9 @@ Delta_f = 1. / (15 * fp.numerix.sqrt(2.))
 # &= \nabla^2\phi + S \notag
 # \\
 # &\approx \nabla^2\phi + S|_\text{old}
-# + \left.{\frac{\partial S}{\partial \phi}}\right|_\text{old} (\phi - \phi_\text{old}) 
+# + \left.{\frac{\partial S}{\partial \phi}}\right|_\text{old} (\phi - \phi_\text{old})
 # \notag \\
-# &= \nabla^2\phi + \left(S - \frac{\partial S}{\partial \phi} \phi\right)_\text{old} 
+# &= \nabla^2\phi + \left(S - \frac{\partial S}{\partial \phi} \phi\right)_\text{old}
 # - \left.{\frac{\partial S}{\partial \phi}}\right|_\text{old} \phi \notag
 # \\
 # &= \nabla^2\phi + S_0 + S_1 \phi \notag
@@ -184,12 +183,12 @@ dmPhidPhi = 4 + 30 * (1 - 2 * phi) * Delta_f
 S1 = dmPhidPhi * phi * (1 - phi) + mPhi * (1 - 2 * phi)
 S0 = mPhi * phi * (1 - phi) - S1 * phi
 
-eq = (fp.TransientTerm() == 
+eq = (fp.TransientTerm() ==
       fp.DiffusionTerm(coeff=1.) + S0 + fp.ImplicitSourceTerm(coeff=S1))
 
 
 # ## Calculate total free energy
-# 
+#
 # > \begin{align}
 # F[\phi] = \int\left[\frac{1}{2}(\nabla\phi)^2 + g(\phi) - \Delta f p(\phi)\right]\,dV \tag{6}
 # \end{align}
@@ -205,7 +204,7 @@ F = ftot.cellVolumeAverage * volumes.sum()
 
 
 # ## Define nucleation
-# 
+#
 # > When adding a new seed, simply add the $\phi$ values given by the $\phi(r)$ profile
 # \begin{align}
 # \phi(x) &= \frac{1 - \tanh\left(\frac{x - x_0}{\sqrt{2}}\right)}{2}\tag{8}
@@ -248,15 +247,15 @@ except:
     # either there's no sumatra, no sumatra project, or no sumatra_label
     # this will be the case if this script is run directly
     output = os.getcwd()
-    
-if parallelComm.procID == 0:
-    print "storing results in {0}".format(output)
-    data = dtr.Treant(output)
-else:
-    class dummyTreant(object):
-        categories = dict()
 
-    data = dummyTreant()
+# if parallelComm.procID == 0:
+#     print("storing results in {0}".format(output))
+#     data = dtr.Treant(output)
+# else:
+#     class dummyTreant(object):
+#         categories = dict()
+
+#     data = dummyTreant()
 
 
 # ### Define output routines
@@ -264,12 +263,18 @@ else:
 # In[13]:
 
 
-def saveStats(elapsed):
+def saveStats(elapsed, data_dir):
     if parallelComm.procID == 0:
-        fname = data['stats.txt'].make().abspath
-        if os.path.exists(fname):
+        fname = data_dir / 'stats.txt'
+        fname_backup = fname.with_suffix(fname.suffix + '.save')
+        if fname.exists():
             # backup before overwrite
-            os.rename(fname, fname + ".save")
+            fname.rename(fname_backup)
+        fp.numerix.savetxt(fname,
+                           stats,
+                           delimiter="\t",
+                           comments='',
+                           header="\t".join(["time", "fraction", "energy"]))
         try:
             fp.numerix.savetxt(fname,
                                stats,
@@ -278,25 +283,27 @@ def saveStats(elapsed):
                                header="\t".join(["time", "fraction", "energy"]))
         except:
             # restore from backup
-            os.rename(fname + ".save", fname)
-        if os.path.exists(fname + ".save"):
-            os.remove(fname + ".save")
+            fname_backup.rename(fname)
+        fname_backup.unlink(missing_ok=True)
+
 
 def current_stats(elapsed):
     return [float(x) for x in [elapsed, phi.cellVolumeAverage, F]]
 
-def savePhi(elapsed):
+def savePhi(elapsed, data_dir):
     if parallelComm.procID == 0:
-        fname = data["t={}.tar.gz".format(elapsed)].make().abspath
+        fname = data_dir / "t={}.tar.gz".format(elapsed)
+        fname.touch()
     else:
         fname = None
-    fname = parallelComm.bcast(fname)
-
-    fp.tools.dump.write((phi,), filename=fname)
+    fname_bcast = parallelComm.bcast(fname)
+    fp.tools.dump.write((phi,), filename=fname_bcast)
 
 def checkpoint(elapsed):
-    saveStats(elapsed)
-    savePhi(elapsed)
+    data_dir = Path('data')
+    data_dir.mkdir(parents=True, exist_ok=True)
+    saveStats(elapsed, data_dir)
+    savePhi(elapsed, data_dir)
 
 
 # ### Figure out when to save
@@ -307,7 +314,7 @@ def checkpoint(elapsed):
 checkpoints = (fp.numerix.arange(int(elapsed / checkpoint_interval),
                                  int(totaltime / checkpoint_interval)) + 1) * checkpoint_interval
 for sometime in [totaltime]:
-    if sometime > elapsed and sometime not in checkpoints: 
+    if sometime > elapsed and sometime not in checkpoints:
         checkpoints = fp.tools.concatenate([checkpoints, [sometime]])
 checkpoints.sort()
 
@@ -350,4 +357,3 @@ for until in checkpoints:
 
     if isnotebook:
         viewer.plot()
-
