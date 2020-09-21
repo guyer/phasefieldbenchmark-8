@@ -284,7 +284,8 @@ def saveStats(elapsed, data_dir):
         except:
             # restore from backup
             fname_backup.rename(fname)
-        fname_backup.unlink(missing_ok=True)
+        if fname_backup.exists():
+            fname_backup.unlink()
 
 
 def current_stats(elapsed):
@@ -339,6 +340,12 @@ checkpoint(elapsed)
 
 # In[16]:
 
+# from fipy.solvers.petsc.linearGMRESSolver import LinearGMRESSolver as Solver
+# from fipy.solvers.petsc.linearLUSolver import LinearLUSolver as Solver
+# from fipy.solvers.petsc.linearPCGSolver import LinearPCGSolver as Solver
+from fipy.solvers.scipy.linearGMRESSolver import LinearGMRESSolver as Solver
+
+solver = Solver()
 
 for until in checkpoints:
     while elapsed.value < until:
@@ -348,7 +355,10 @@ for until in checkpoints:
         if dt_until < dt:
             dt = dt_until
         for sweep in range(5):
-            eq.sweep(var=phi, dt=dt)
+            res = eq.sweep(var=phi, dt=dt, solver=solver)
+            print(sweep, res)
+            # import ipdb; ipdb.set_trace()
+
         elapsed.value = elapsed() + dt
         stats.append(current_stats(elapsed))
         dt = dt_save
