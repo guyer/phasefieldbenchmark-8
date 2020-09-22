@@ -356,8 +356,6 @@ for until in checkpoints:
             dt = dt_until
         for sweep in range(5):
             res = eq.sweep(var=phi, dt=dt, solver=solver)
-            print(sweep, res)
-            # import ipdb; ipdb.set_trace()
 
         elapsed.value = elapsed() + dt
         stats.append(current_stats(elapsed))
