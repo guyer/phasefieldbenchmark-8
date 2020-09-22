@@ -1,9 +1,0 @@
-restart:       # path to restart file
-Lx: 500.       # length of mesh
-Ly: 500.       # height of mesh
-dx: 0.8        # cell spacing
-checkpoint_interval: 4.0 # period at which to save results for restart
-savetime: 80.0 # time at which to save results
-totaltime: 300.0 # duration of simulations
-dt: 0.04       # timestep
-factor: 1.1    # fraction of equilibrium radius
