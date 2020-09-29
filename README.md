@@ -2,10 +2,10 @@
 
 *Add DOI Link for this repository to include in paper. Can we do that in time?*
 
-This repository contains supplemnatary material and code necessary to
+This repository contains supplementary material and code necessary to
 run some of the examples from the paper entitled *Phase Field
-Benchmark Problems for Nucleation* authored by *W. Wu et al*
-[paper][paper].
+Benchmark Problems for Nucleation* authored by *W. Wu et al.* (not yet
+submitted).
 
 ## Overview
 
@@ -33,8 +33,8 @@ implemented in the paper, but a few relevant examples. It is hoped
 that other examples from the paper can be implemented by editing the
 input files.
 
-The development is an ongoing process and probably will only be
-completed after the paper has already been published.
+The development of this repostiory is an ongoing process and probably
+will only be completed after the paper has already been published.
 
 ## Feedback
 
@@ -43,3 +43,5 @@ completed after the paper has already been published.
 ## License
 
 Read the [terms of use](./LICENSE.md).
+
+[ref]:
