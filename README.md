@@ -25,9 +25,9 @@ specification. The results from each of these codes indicate good
 convergence demonstrating the overall robustness of the
 specification. The four codes include [MOOSE][MOOSE], [FiPy][FiPy],
 [PRISMS-PF] and an unpublished custom finite difference code. Each of
-these are in a separate directory (['moose'](moose/README.md),
-['fipy'](fipy/README.md), ['prisms-pf'][primsms-pf/README.md) and
-['custom'](custom/README.md)) with detailed installation and usage
+these are in a separate directory ([`moose`](moose/README.md),
+[`fipy`](fipy/README.md), [`prisms-pf`](primsms-pf/README.md) and
+[`custom`](custom/README.md)) with detailed installation and usage
 instructions. The included examples do not cover every example
 implemented in the paper, but a few relevant examples. It is hoped
 that other examples from the paper can be implemented by editing the
@@ -38,7 +38,19 @@ will only be completed after the paper has already been published.
 
 ## Feedback
 
+Please open up an issue to contact the authors or leave feedback.
+
 ## Credits
+
+ - Wenkun Wu
+ - [David Montiel](https://mse.engin.umich.edu/people/dmontiel)
+ - [Jon Guyer](https://www.nist.gov/people/jonathan-e-guyer)
+ - [Peter Voorhees](http://speedy.ms.northwestern.edu/)
+ - [Jim Warren](https://www.nist.gov/people/james-warren)
+ - [Daniel Wheeler](https://www.nist.gov/people/daniel-wheeler)
+ - [László Gránásy](https://www.mpie.de/3694281/laszlo_granasy)
+ - [Tamás Pusztai](https://www.szfki.hu/~pusztai/)
+ - [Olle Heinonen](https://www.anl.gov/profile/olle-g-heinonen)
 
 ## License
 
