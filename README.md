@@ -23,7 +23,7 @@ specification and further results and examples of implementations.
 Four different codes are used to implement the benchmark
 specification. The results from each of these codes indicate good
 convergence demonstrating the overall robustness of the
-specification. The four codes include [MOOSE][MOOSE], [FiPy][FiPy],
+specification. The four codes include [MOOSE], [FiPy],
 [PRISMS-PF] and an unpublished custom finite difference code. Each of
 these are in a separate directory ([`moose`](moose/README.md),
 [`fipy`](fipy/README.md), [`prisms-pf`](primsms-pf/README.md) and

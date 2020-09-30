@@ -21,7 +21,7 @@ let
   copy_cmd = paths: builtins.concatStringsSep ";\n" (map make_cmd paths);
 in
   pkgs.dockerTools.buildImage {
-    name = "fipy-docker";
+    name = "wd15/fipy-nucleation";
     tag = "latest";
 
     contents = [ (import ./default.nix { inherit pkgs; }) ] ++ [
