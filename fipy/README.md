@@ -4,12 +4,12 @@ This directory contains the input files to solve [PFHub benchmark
 8a](https://pages.nist.gov/pfhub/benchmarks/benchmark8.ipynb/), which
 is a phase field nucleation problem, using the [FiPy] PDE solver.
 
-This is a sample of the all the results necessary to produce the FiPy
-data for the [nucleation paper]. See [this repository] for the
-complete set of input files necessary.
+This is justa a sample example from the FiPy implementation used in
+the [nucleation paper]. See [this repository] for a more complete set
+of input files.
 
-The FiPy setup is currently far from complete. See the issues that are
-still broken for more details of problems that still need to be
+The FiPy setup is currently far from complete. See the [issues] that
+are still broken for more details of problems that still need to be
 addressed.
 
 ## Installation using Docker
@@ -72,3 +72,4 @@ to build and run.
 [conda-install]: https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
 [nucleation paper]: ...
 [this repository]: https://github.com/guyer/phasefieldbenchmark-8
+[issues]: https://github.com/wd15/phase-field-nucleation-benchmark/issues?q=is%3Aissue+is%3Aopen+label%3Afipy
