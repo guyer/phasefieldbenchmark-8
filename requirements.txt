@@ -9,7 +9,7 @@ mpi4py==3.0.2
 numpy==1.16.4
 pandas==0.24.2
 pysparse==1.3.dev0
-PyYAML==5.1.2
+PyYAML==5.4
 scipy==1.2.1
 -e git+git@github.com:guyer/sumatra.git@9d41e9e3a09d54633de295b981cb4ba36960691f#egg=Sumatra
 
