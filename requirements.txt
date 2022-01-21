@@ -2,7 +2,7 @@ datreant.core==0.7.1
 -e git+git@github.com:usnistgov/fipy.git@347b81588be24718a713906f76a156e059282d7f#egg=FiPy
 future==0.18.0
 GitPython==2.1.7
-ipython==5.8.0
+ipython==7.16.3
 matplotlib==2.2.4
 mayavi==4.7.1
 mpi4py==3.0.2
